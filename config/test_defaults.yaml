@@ -1,0 +1,33 @@
+seed: 69
+log: True
+cpu: 1
+gpu: 1
+num_nodes: 1
+
+trainer:
+  precision: 32
+  max_epochs: 1000
+  benchmark: True
+  profiler: null
+  num_sanity_val_steps: 0
+  check_val_every_n_epoch: 10
+  accelerator: 'gpu'
+  devices: ${gpu}
+  num_nodes: ${num_nodes}
+
+defaults:
+  - _self_
+  - model: gpt2
+  - data_module: max
+  - dataset: e2e_nlg
+  - transform: no_transform
+  - loss: mse
+  - user_overrides: null
+
+callbacks:
+
+tasks:
+  _target_: tasks.generate_text.TextGenerationModule
+  
+pretrained: "gpt2"
+# lightning_logs\version_0\checkpoints\ # add path to the pretrained weights
