@@ -13,6 +13,20 @@ conda env create --file environment.yml
 conda activate icon
 ```
 
+and 
+
+```
+conda env export > environment.yml 
+```
+
+and 
+
+```
+conda list --export > requirements.txt
+```
+
+to update the environment whenever there's been a change made in the dependencies.
+
 More on conda with GPUS:
  - https://fmorenovr.medium.com/set-up-conda-environment-pytorch-1-7-cuda-11-1-96a8e93014cc
 
@@ -35,6 +49,17 @@ The boundary conditions are typically specified as:
 The goal is to find the eigenvalues $\lambda_n$ and corresponding eigenfunctions $u_n(x)$ that satisfy the differential equation and the specified boundary conditions. 
 
 ## Instructions 
+
+First, create the dataset using the command
+```
+python3 dataset/create_dataset.py
+```
+
+which will create a tfrecord in a folder named data. This command also takes in three arguments: `number`, `gridsize`, and `path`. The `number` flag represents the number of operators to generate, the `gridsize` flag represents the number of points to be sampled in each operator, and the `path` flag is where the tfrecord dataset will be created. An example command is
+
+```
+python3 dataset/create_dataset.py --number 1000 --gridsize 1001 --path ./data
+```
 
 To train the model, run the following command in the terminal:
 ```

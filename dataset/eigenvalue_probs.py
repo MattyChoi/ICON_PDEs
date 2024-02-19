@@ -7,8 +7,7 @@ from functools import partial
 import numpy as np
 import torch
 from torch.utils.data import Dataset
-
-from dataset.finite_diff import solve_schrodinger_eq
+from tfrecord.torch.dataset import TFRecordDataset
 
 
 # create a pytorch dataset of eigenvalue problems
@@ -16,10 +15,10 @@ class EigvalueProbs(Dataset):
     """
     Dataset of eigenvalue problems for the Schrödinger equation
     """
-    def __init__(self, transform=None):
+    def __init__(self, data_dir="", transform=None):
         super(EigvalueProbs, self).__init__()
 
-        self.data = []
+        self.data = TFRecordDataset("./data/finite_diff.tfrecord", index_path=None)
 
 
     def __getitem__(self, index):

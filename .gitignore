@@ -8,6 +8,7 @@ sample.png
 # *.gif
 *.ipynb
 test.py
+data
 
 
 # Byte-compiled / optimized / DLL files

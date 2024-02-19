@@ -29,9 +29,10 @@ cffi=1.16.0=py39h80987f9_0
 charset-normalizer=2.0.4=pyhd3eb1b0_0
 click=8.1.7=py39hca03da5_0
 contourpy=1.2.0=py39h48ca7d4_0
+crc32c=2.3.post0=pypi_0
 cryptography=41.0.7=py39hd4332d6_0
 cycler=0.11.0=pyhd3eb1b0_0
-datasets=2.16.1=pypi_0
+datasets=2.16.1=pyhd8ed1ab_0
 dill=0.3.6=py39hca03da5_0
 einops=0.7.0=pypi_0
 ffmpeg=4.2.2=h04105a8_0
@@ -52,7 +53,7 @@ google-auth-oauthlib=0.5.2=py39hca03da5_0
 grpc-cpp=1.48.2=hc60591f_4
 grpcio=1.48.2=py39hc60591f_4
 gtest=1.14.0=h48ca7d4_0
-huggingface-hub=0.20.2=pypi_0
+huggingface_hub=0.20.2=pyhd8ed1ab_0
 hydra-core=1.3.2=pypi_0
 icu=73.1=h313beb8_0
 idna=3.4=py39hca03da5_0
@@ -128,7 +129,7 @@ pillow=10.0.1=py39h3b245a6_0
 pip=23.3.1=py39hca03da5_0
 protobuf=3.20.3=py39h313beb8_0
 pyarrow=11.0.0=py39hbfed03b_1
-pyarrow-hotfix=0.6=pypi_0
+pyarrow-hotfix=0.6=pyhd8ed1ab_0
 pyasn1=0.4.8=pyhd3eb1b0_0
 pyasn1-modules=0.2.8=py_0
 pycparser=2.21=pyhd3eb1b0_0
@@ -162,6 +163,7 @@ sympy=1.12=py39hca03da5_0
 tensorboard=2.12.1=py39hca03da5_0
 tensorboard-data-server=0.7.0=py39ha6e5c4f_0
 tensorboard-plugin-wit=1.8.1=py39hca03da5_0
+tfrecord=1.14.4=pypi_0
 threadpoolctl=2.2.0=pyh0d69192_0
 tk=8.6.12=hb8d0fd4_0
 tokenizers=0.13.2=py39h3dd52b7_1
