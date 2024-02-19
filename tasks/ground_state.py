@@ -11,33 +11,12 @@ import torchmetrics
 from transformers import AutoTokenizer
 
 
-class TextGenerationModule(L.LightningModule):
+class GroundStateModule(L.LightningModule):
     def __init__(self, hparams: DictConfig):
         super().__init__()
         self.save_hyperparameters(hparams)
         self.model = hydra.utils.instantiate(hparams.model)
         # self.loss = hydra.utils.instantiate(hparams.loss)
-
-
-    def generate(self, prompt):
-        # tboard = self.logger.experiment
-        max_new_tokens = 500
-
-        input = self.model.tokenizer(
-            prompt,
-            add_special_tokens=False,
-            max_length=self.model.max_length,
-            truncation=True,
-        )
-        start_ids = input["input_ids"]
-        attn_mask = input["attention_mask"]
-
-        start_ids = torch.tensor(start_ids, dtype=torch.long, device=self.device)[None, ...]
-        attn_mask = torch.tensor(attn_mask, dtype=torch.float, device=self.device)[None, ...]
-
-        answer = self.model.generate(start_ids, max_new_tokens, attn_mask)
-        self.print(self.model.tokenizer.decode(answer[0].tolist()))
-        self.print('------------------------------------------')
 
 
     def training_step(
