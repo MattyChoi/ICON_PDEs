@@ -1,0 +1,21 @@
+train:
+  _target_: dataset.eigenvalue_probs.EigvalueProbs
+  data_dir: ${hydra:runtime.cwd}/data/finite_diff.tfrecord
+  num_examples: 5
+  max_num_pairs: null
+  encoding: "trig"
+  transform: null
+val:
+  _target_: dataset.eigenvalue_probs.EigvalueProbs
+  data_dir: ${hydra:runtime.cwd}/data/finite_diff.tfrecord
+  num_examples: 5
+  max_num_pairs: null
+  encoding: "trig"
+  transform: null
+test: 
+  _target_: dataset.eigenvalue_probs.EigvalueProbs
+  data_dir: ${hydra:runtime.cwd}/data/finite_diff.tfrecord
+  num_examples: 5
+  max_num_pairs: null
+  encoding: "trig"
+  transform: null

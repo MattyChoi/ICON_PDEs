@@ -9,6 +9,7 @@ sample.png
 *.ipynb
 test.py
 data
+.DS_Store
 
 
 # Byte-compiled / optimized / DLL files

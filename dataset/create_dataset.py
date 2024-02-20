@@ -40,11 +40,11 @@ def finite_diff_dataset(path: str, num_operators: int, gridsize: int):
         os.makedirs(path)
 
     file_path = os.path.join(path, "finite_diff.tfrecord")
+
     # Create a tfrecord writer and overwrite any existing file
     with tf.io.TFRecordWriter(file_path) as writer:
-
         # Create a grid
-        grid = torch.linspace(0, 1, gridsize)[1:-1]
+        grid = torch.linspace(0, 1, gridsize)
 
         # Create a dataset of eigenvalue problems
         for i in tqdm(range(num_operators)):
@@ -52,7 +52,7 @@ def finite_diff_dataset(path: str, num_operators: int, gridsize: int):
             potential_fn = generate_random_potential_fn(pieces=10)
 
             # Create a Hamiltonian matrix
-            hamiltonian = finite_diff(grid, potential_fn)
+            hamiltonian = finite_diff(grid[1:-1], potential_fn)
 
             # Get the eigenvalues and eigenvectors
             _, eigenvecs = get_eigvals_and_eigvecs(hamiltonian)
@@ -61,10 +61,7 @@ def finite_diff_dataset(path: str, num_operators: int, gridsize: int):
             data_dic = {
                 "grid": grid.numpy(),
                 "conditions": potential_fn(grid).numpy(),
-                "qois": eigenvecs.numpy(),
-                "boundary_start": 0,
-                "boundary_end": 0,
-                "index": i,
+                "qois": np.pad(eigenvecs[:,0].numpy(), (1, 1)),
             }
 
             # Create an example
@@ -79,8 +76,8 @@ def main():
     parser = argparse.ArgumentParser(description='Creates a tfrecord dataset of eigenvalue problems for the Schrödinger equation.')
 
     # Add command-line arguments or flags
-    parser.add_argument('-n', '--number', type=int, default=1000, help='number of operators to generate')
-    parser.add_argument('-g', '--gridsize', type=int, default=1001, help='size of the grid sampled for each operator')
+    parser.add_argument('-n', '--number', type=int, default=10000, help='number of operators to generate')
+    parser.add_argument('-g', '--gridsize', type=int, default=101, help='size of the grid sampled for each operator')
     parser.add_argument('-p', '--path', type=str, default="./data", help='folder path to save the tfrecord file')
 
     args = parser.parse_args()
