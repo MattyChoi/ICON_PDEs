@@ -11,8 +11,6 @@ from lightning.pytorch.trainer import Trainer
 from lightning.pytorch.loggers import TensorBoardLogger
 from lightning.pytorch.callbacks import ModelCheckpoint
 
-from models.text_gen.gpt2 import GPT2LM
-
 
 def get_predict_params(cfg: DictConfig):
     params = OmegaConf.to_container(cfg.trainer, resolve=True)
@@ -47,14 +45,9 @@ def pred(cfg: DictConfig):
 
     # build model
     pretrained = cfg.pretrained
-    if (pretrained.startswith("lightning_logs")):
-        task = hydra.utils.instantiate(cfg.tasks, cfg).load_from_checkpoint(
-            pretrained, dataset=cfg.dataset, map_location=None
-        )
-    else:
-        model = GPT2LM.from_pretrained(pretrained)
-        task = hydra.utils.instantiate(cfg.tasks, cfg)
-        task.model = model
+    task = hydra.utils.instantiate(cfg.tasks, cfg).load_from_checkpoint(
+        pretrained, dataset=cfg.dataset, map_location=None
+    )
 
     # build data for model to test on
     data_module = hydra.utils.instantiate(
