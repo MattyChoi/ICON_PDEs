@@ -145,7 +145,7 @@ def create_prompt(examples, max_num_pairs=None, encoding="trig"):
     # create the query key
     query_term = torch.zeros(max_num_pairs)
     query_pos = grid[-1][qoi_inds]
-    query = torch.vstack([query_term, query_pos])
+    query = torch.vstack([query_term, query_pos]).t()
 
     # create the labels
     labels = qois[-1][qoi_inds]
@@ -157,7 +157,7 @@ def create_prompt(examples, max_num_pairs=None, encoding="trig"):
     indices = torch.hstack(indices)
     
     # stack the terms, positions, values and indices to create the prompt
-    prompt = torch.vstack((terms, positions, values, indices))
+    prompt = torch.vstack((terms, positions, values, indices)).t()
 
     return prompt, query, labels
 

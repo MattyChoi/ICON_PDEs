@@ -4,7 +4,7 @@ import numpy as np
 from functools import partial
 import haiku as hk
 import utils
-from transformer import SelfAttnTransformer, CrossAttnTransformer
+from models.transformer_hk import SelfAttnTransformer, CrossAttnTransformer
 from einshape import jax_einshape as einshape
 import dataclasses
 
