@@ -6,9 +6,9 @@ num_nodes: 1
 
 defaults:
   - _self_
-  - model: gpt2
+  - model: icon
   - data_module: max
-  - dataset: e2e_nlg
+  - dataset: eigvals
   - transform: no_transform
   - loss: mse
   - user_overrides: null
@@ -19,11 +19,11 @@ pretrained:
 callbacks:
 
 tasks:
-  _target_: tasks.generate_text.TextGenerationModule
+  _target_: tasks.ground_state.GroundStateModule
 
 optimizer:
   _target_: torch.optim.Adam
-  lr: 5e-4
+  lr: 1e-5
 
 lr_scheduler:
   _target_: torch.optim.lr_scheduler.MultiStepLR
@@ -32,11 +32,11 @@ lr_scheduler:
 
 trainer:
   precision: 32
-  max_epochs: 1000
+  max_epochs: 10
   benchmark: True
   profiler: null
   num_sanity_val_steps: 0
-  check_val_every_n_epoch: 10
+  check_val_every_n_epoch: 2
   accelerator: 'gpu'
   devices: ${gpu}
   num_nodes: ${num_nodes}

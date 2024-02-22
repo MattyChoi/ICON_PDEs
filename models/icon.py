@@ -7,22 +7,21 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from models.transformer import SelfAttnTransformer, CrossAttnTransformer
+
 
 # In-Context Operator Network
 class ICON(nn.Module):
     def __init__(
         self, 
         max_length: int, 
+        prompt_dim: int,
+        query_dim: int,
+        qoi_size: int,
         emb_dim: int,
         num_heads: int, 
         num_enc_layers: int,
         num_dec_layers: int,
-        q_size: int,
-        kv_size: int,
-        qoi_v_size: int,
-        QK_size: int,
-        V_size: int,
-        initializer: str = 'glorot_uniform',
         widening_factor: int = 4
     ):
         """
@@ -41,61 +40,54 @@ class ICON(nn.Module):
 
         self.max_length = max_length
         self.emb_dim = emb_dim
-        self.num_heads = num_heads
-        self.num_enc_layers = num_enc_layers
-        self.num_dec_layers = num_dec_layers
+
+        # Project the prompts to an embedding with a higher number of dimensions
+        self.prompt_proj = nn.Linear(prompt_dim, emb_dim)
+
+        # Project the query keys to an embedding with a higher number of dimensions
+        self.q_proj = nn.Linear(query_dim, emb_dim)
+
+        # create the encoder part of the transformer
+        self.encoder = SelfAttnTransformer(
+            num_heads=num_heads,
+            num_layers=num_enc_layers,
+            emb_dim=emb_dim,
+            widening_factor=widening_factor,
+        )   
+
+        # create the decoder part of the transformer
+        self.decoder = CrossAttnTransformer(
+            num_heads=num_heads,
+            num_layers=num_dec_layers,
+            emb_dim=emb_dim,
+            kdim=emb_dim,
+            vdim=emb_dim,
+            widening_factor=widening_factor,
+        )
+
+        # Project the decoder output to the output space
+        self.qoi_proj = nn.Linear(emb_dim, qoi_size)
 
 
-    def forward(self, prompt, query, labels):
+    def forward(self, prompt, query):
         """
-        prompt: outputs of a string of words through a tokenizer, should have shape (batch_size, emb_dim, max_length)
-        attn_mask: vector of the same shape as idx with 0s for pad tokens and 0s for the rest
-        targets: same as idx, should have shape (batch_size, vocab_size)
+        prompt: 2D array, [batch_size, propmt_size, prompt_dim (number of keys, values, inds)]
+        query: 2D array, query representing the key of qoi, [batch_size, qoi_size, query_dim]
         """
-        # get the device the inputs are being trained on
-        device = idx.device
 
-        # b is the batch size, t is the number of tokens
-        b, t = idx.shape
+        # project the prompts to a higher embedding space
+        prompt = self.prompt_proj(prompt)
 
-        assert t <= self.max_length, f"Cannot forward sequence of length {t}, block size is only {self.max_length}"
+        # get the encoder embeddings of the prompts
+        enc = self.encoder(prompt)
 
-        pos = torch.arange(t, dtype=torch.long, device=device)
+        # project the query keys to a higher embedding space
+        query = self.q_proj(query)
 
-        # get the word and positional embeddings
-        tok_emb = self.transformer.wte(idx) # shape is (b, t, emb_dim)
-        pos_emb = self.transformer.wpe(pos) # shape is (t, c)
+        # get the decoder embeddings of the query
+        dec = self.decoder(query=query, key=enc, value=enc)
 
-        # put through dropout
-        x = self.transformer.dropout(tok_emb + pos_emb) # shape is (b, t, emb_dim)
+        # infer the qoi from the decoder embeddings
+        qoi = self.qoi_proj(dec).squeeze(-1)
 
-        # create the attention mask for the causal attention mechanism
-        if attn_mask is not None:
-            attn_mask = attn_mask.view(b, -1)       # make sure it's the same shape as the tokens
-            attn_mask = attn_mask[:, None, None, :]
-            attn_mask = (1.0 - attn_mask) * torch.finfo(x.dtype).min
-
-        # put it through the decoder blocks
-        for block in self.transformer.h:
-            x = block(x, attn_mask) # shape is (b, t, emb_dim)
-
-        # apply the last layer norm
-        x = self.transformer.ln_f(x) # shape is (b, t, emb_dim)
-
-        loss = None
-        # get the scores for each vocab
-        logits = self.lm_head(x) # shape is (b, t, vocab_size)
-        if labels is not None:
-
-            # shift the logits and labels so that tokens < n predict n
-            shift_logits = logits[..., :-1, :].contiguous()
-            shift_labels = labels[..., 1:].contiguous()
-
-            # combine the batch and timestep axes for better parallelization
-            loss_fct = nn.CrossEntropyLoss()
-            loss = loss_fct(
-                shift_logits.view(-1, shift_logits.size(-1)), 
-                shift_labels.view(-1), 
-            )
-        
-        return logits, loss
+        return qoi

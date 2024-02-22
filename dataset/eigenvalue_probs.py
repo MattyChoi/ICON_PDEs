@@ -163,7 +163,60 @@ def create_prompt(examples, max_num_pairs=None, encoding="trig"):
 
 
 # create a pytorch dataset of eigenvalue problems
-class EigvalueProbs(IterableDataset):
+class EigvalueProbs(Dataset):
+    """
+    Dataset of eigenvalue problems for the Schrödinger equation
+    """
+    def __init__(
+        self, 
+        data_dir="./data/finite_diff.tfrecord", 
+        num_examples=5, 
+        max_num_pairs=None,
+        encoding="trig",
+        transform=None
+    ):
+        super(EigvalueProbs, self).__init__()
+
+        self.num_examples = num_examples
+        self.max_num_pairs = max_num_pairs
+        self.encoding = encoding
+
+        # load the iterable dataset from the tfrecord file
+        ds = list(TFRecordDataset(data_dir, index_path=None))
+        shuffle = torch.randperm(len(ds))
+
+        # create a list of examples, each containing a number of examples
+        self.data = []
+        for i in range(len(ds) // num_examples):
+            self.data.append([])
+            for j in range(num_examples):
+                self.data[i].append(ds[shuffle[i*num_examples+j]])
+            
+
+    def __getitem__(self, index):
+        # create a single prompt, using a number of examples from our dataset
+        examples = self.data[index]
+        examples = default_collate(examples)
+
+        return create_prompt(examples, max_num_pairs=self.max_num_pairs, encoding=self.encoding)
+    
+
+    def __len__(self):
+        return len(self.data)
+    
+
+    def collate_fn(self, batch):
+        prompts, queries, labels = list(zip(*batch))
+
+        prompts = torch.stack(prompts, dim=0)
+        queries = torch.stack(queries, dim=0)
+        labels = torch.stack(labels, dim=0)
+
+        return prompts, queries, labels
+    
+
+# create a pytorch dataset of eigenvalue problems
+class EigvalueProbsIter(IterableDataset):
     """
     Dataset of eigenvalue problems for the Schrödinger equation
     """
@@ -192,37 +245,16 @@ class EigvalueProbs(IterableDataset):
 
         yield create_prompt(examples, max_num_pairs=self.max_num_pairs, encoding=self.encoding)
 
-
-# # create a pytorch dataset of eigenvalue problems
-# class EigvalueProbs(Dataset):
-#     """
-#     Dataset of eigenvalue problems for the Schrödinger equation
-#     """
-#     def __init__(self, data_dir="./data/finite_diff.tfrecord", num_examples=5, transform=None):
-#         super(EigvalueProbs, self).__init__()
-
-#         self.num_examples = num_examples
-
-#         # load the iterable dataset from the tfrecord file
-#         data = TFRecordDataset(data_dir, index_path=None)
-#         shuffled_data = torch.random.shuffle(data)
+        
+    def collate_fn(self, batch):
+        return torch.stack(batch, dim=0)
 
 
-#     def __getitem__(self, index):
-#         return self.data[index]
+# if __name__ == "__main__":
+#     data = EigvalueProbs()
+
+#     import pdb
+#     pdb.set_trace()
     
-
-#     def __len__(self):
-#         return len(self.data) // self.num_examples
-    
-
-#     def collate_fn(self, batch):
-#         return torch.stack(batch, dim=0)
-    
-
-if __name__ == "__main__":
-    data = EigvalueProbs()
-    
-    prompt, query, labels = next(iter(data))
-    import pdb
-    pdb.set_trace()
+#     prompt, query, labels = data[0]
+#     print(prompt.shape, query.shape, labels.shape)

@@ -16,19 +16,20 @@ class GroundStateModule(L.LightningModule):
         super().__init__()
         self.save_hyperparameters(hparams)
         self.model = hydra.utils.instantiate(hparams.model)
-        # self.loss = hydra.utils.instantiate(hparams.loss)
+        self.loss = hydra.utils.instantiate(hparams.loss)
 
 
     def training_step(
         self, batch, batch_idx: int, *args, **kwargs
     ) -> torch.Tensor:
         # get all the data
-        input_ids = batch["input_ids"]
-        attn_mask = batch["attention_mask"]
-        labels = batch["labels"]
+        prompt, query, labels = batch
         
         # run it through the model to get the logits and loss
-        logits, loss = self.model(input_ids, attn_mask, labels)
+        qois = self.model(prompt, query)
+
+        # calculate the loss
+        loss = self.loss(qois, labels)
 
         # log the loss
         self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
@@ -40,12 +41,13 @@ class GroundStateModule(L.LightningModule):
         self, batch: torch.Tensor, batch_idx: int, *args, **kwargs
     ) -> torch.Tensor:
         # get all the data
-        input_ids = batch["input_ids"]
-        attn_mask = batch["attention_mask"]
-        labels = batch["labels"]
-
+        prompt, query, labels = batch
+        
         # run it through the model to get the logits and loss
-        logits, loss = self.model(input_ids, attn_mask, labels)
+        qois = self.model(prompt, query)
+
+        # calculate the loss
+        loss = self.loss(qois, labels)
 
         # log the loss
         self.log("val_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
@@ -54,20 +56,20 @@ class GroundStateModule(L.LightningModule):
     
 
     def on_validation_epoch_end(self) -> None:
-        prompt = "What is the answer to life, the universe, and everything?"
-        self.generate(prompt)
+        pass
 
 
     def test_step(
         self, batch: torch.Tensor, batch_idx: int, *args, **kwargs
     ) -> torch.Tensor:
         # get all the data
-        input_ids = batch["input_ids"]
-        attn_mask = batch["attention_mask"]
-        labels = batch["labels"]
-
+        prompt, query, labels = batch
+        
         # run it through the model to get the logits and loss
-        logits, loss = self.model(input_ids, attn_mask, labels)
+        qois = self.model(prompt, query).squeeze
+
+        # calculate the loss
+        loss = self.loss(qois, labels)
 
         # log the loss
         self.log("test_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
@@ -76,8 +78,7 @@ class GroundStateModule(L.LightningModule):
 
 
     def on_test_epoch_end(self) -> None:
-        prompt = "What is the answer to life, the universe, and everything?"
-        self.generate(prompt)
+        pass
 
 
     def configure_optimizers(self):
