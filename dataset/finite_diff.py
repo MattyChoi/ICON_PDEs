@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 
 # given a the number of steps, return a random bernoulli potential function 
-def generate_random_potential_fn(pieces=5, ground=0.0):
+def generate_random_potential_fn(pieces=8, ground=5.0):
     
     def bernoulli(x):
         # assert that all values given in x are between 0 and 1
@@ -59,21 +59,25 @@ def get_eigvals_and_eigvecs(hamiltonian):
 
 # if __name__ == "__main__":
 #     # Define the parameters
-#     domain_size = 1001
+#     domain_size = 101
 #     x_values = torch.linspace(0, 1, domain_size)[1:-1]
     
 #     # Generate a random nonnegative potential function
-#     potential = generate_random_potential_fn(pieces=50)
+#     potential = generate_random_potential_fn(pieces=10, ground=5.0)
 
 #     A = finite_diff(x_values, potential)
 #     vals, vecs = get_eigvals_and_eigvecs(A)
     
 #     # Plot the potential and the first few eigenfunctions
 #     plt.figure(figsize=(12,10))
-#     for i in range(4):
+#     # plt.plot(x_values,potential(x_values),lw=3)
+#     for i in range(1):
 #         plt.plot(x_values,vecs[:,i].numpy(),lw=3, label="{} ".format(i))
 #         plt.xlabel('x', size=14)
 #         plt.ylabel('$\psi$(x)',size=14)
+#         print(vecs[:,i].norm())
+#         print(vecs[:,i].max())
+#         print(vecs[:,i].min())
 #     plt.legend()
 #     plt.title('normalized wavefunctions for a harmonic oscillator using finite difference method',size=14)
 #     plt.show()

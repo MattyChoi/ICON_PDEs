@@ -8,7 +8,8 @@ from omegaconf import DictConfig
 import lightning as L
 import torch
 import torchmetrics
-from transformers import AutoTokenizer
+
+from utils.visualizations import plot_ground_state
 
 
 class GroundStateModule(L.LightningModule):
@@ -17,6 +18,10 @@ class GroundStateModule(L.LightningModule):
         self.save_hyperparameters(hparams)
         self.model = hydra.utils.instantiate(hparams.model)
         self.loss = hydra.utils.instantiate(hparams.loss)
+        
+        # save the validation conditions, qois, and labels
+        self.val_outs = []
+        self.test_outs = []
 
 
     def training_step(
@@ -52,11 +57,30 @@ class GroundStateModule(L.LightningModule):
         # log the loss
         self.log("val_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
 
-        return loss
-    
+        if hasattr(self.model, "decoder"):
+            outs = query, qois, labels
+        else:
+            outs = prompt, qois, labels
+
+        self.val_outs.append(outs)
+
 
     def on_validation_epoch_end(self) -> None:
-        pass
+        batch_num, batch_ind = 0, 0
+
+        # get the validation conditions, qois, and labels
+        conditions, qois, labels = self.val_outs[batch_num]
+        conditions = conditions[:, :, 1]
+        
+        fig = plot_ground_state(
+            conditions=conditions[batch_ind], 
+            qois=qois[batch_ind], 
+            labels=labels[batch_ind],
+            show=False,
+        )
+
+        self.logger.experiment.add_figure(f"Validation Epoch {self.current_epoch}", fig)
+        self.val_outs.clear()
 
 
     def test_step(
@@ -66,7 +90,7 @@ class GroundStateModule(L.LightningModule):
         prompt, query, labels = batch
         
         # run it through the model to get the logits and loss
-        qois = self.model(prompt, query).squeeze
+        qois = self.model(prompt, query)
 
         # calculate the loss
         loss = self.loss(qois, labels)
@@ -74,11 +98,30 @@ class GroundStateModule(L.LightningModule):
         # log the loss
         self.log("test_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
 
-        return loss
+        if hasattr(self.model, "decoder"):
+            outs = query, qois, labels
+        else:
+            outs = prompt, qois, labels
+
+        self.test_outs.append(outs)
 
 
     def on_test_epoch_end(self) -> None:
-        pass
+        batch_num, batch_ind = 0, 0
+
+        # get the validation conditions, qois, and labels
+        conditions, qois, labels = self.test_outs[batch_num]
+        conditions = conditions[:, :, 1]
+
+        fig = plot_ground_state(
+            conditions=conditions[batch_ind], 
+            qois=qois[batch_ind], 
+            labels=labels[batch_ind],
+            show=False,
+        )
+
+        self.logger.experiment.add_figure(f"Test Epoch {self.current_epoch}", fig)
+        self.test_outs.clear()
 
 
     def configure_optimizers(self):

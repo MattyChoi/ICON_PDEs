@@ -6,7 +6,7 @@ num_nodes: 1
 
 defaults:
   - _self_
-  - model: icon
+  - model: encoder
   - data_module: max
   - dataset: eigvals
   - transform: no_transform

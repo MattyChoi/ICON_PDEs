@@ -1,0 +1,8 @@
+_target_: models.encoder.Encoder
+max_length: 250 
+prompt_dim: 4
+qoi_size: 1
+emb_dim: 24
+num_heads: 8
+num_layers: 4
+widening_factor: 4

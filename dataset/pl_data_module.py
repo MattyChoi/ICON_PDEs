@@ -48,4 +48,5 @@ class DataModule(L.LightningDataModule):
             pin_memory=cfg.pin_memory,
             collate_fn=_dataset.collate_fn,
             shuffle=cfg.shuffle,
+            persistent_workers=True,
         )

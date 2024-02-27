@@ -3,7 +3,6 @@ import sys
 # Import modules from base directory
 sys.path.insert(0, os.getcwd())
 
-from functools import partial
 import numpy as np
 import torch
 from torch.utils.data import Dataset, IterableDataset, default_collate
@@ -38,7 +37,7 @@ def trigonometric_encode(index, num_examples, max_num_pairs):
     return encoding
 
 
-def create_prompt(examples, max_num_pairs=None, encoding="trig"):
+def create_prompts_only(examples, max_num_pairs=None, encoding="trig"):
     grid, conds, qois = examples['grid'], examples['conditions'], examples['qois']
 
     # get the number of examples given
@@ -48,7 +47,79 @@ def create_prompt(examples, max_num_pairs=None, encoding="trig"):
     num_pos = len(grid[0])
 
     # get the max number of condition/qoi pairs
-    max_num_pairs = int(len(grid[0]) * 0.5) if not max_num_pairs else max_num_pairs
+    max_num_pairs = int(len(grid[0]) * 0.5) if not max_num_pairs else min(max_num_pairs, len(grid[0]))  
+
+    terms = []
+    positions = []
+    values = []
+    indices = []
+    labels = []
+
+    # term is 0 or 1 based on whether it is a condition/qoi value or boundary value respectively
+    cond_term = torch.zeros(max_num_pairs)
+    cond_term[-2:] = 1      # the last two columns will be reserved for the boundary values
+
+    # iterate over the examples to create the prompt
+    for i in range(num_examples):
+        # randomly choose max_num_pairs of condition/qoi pairs
+        inds = (torch.randperm(num_pos-2) + 1)[:max_num_pairs-2]   # leave out two for the boundary conditions
+        boundary_inds = torch.tensor([0, -1])
+        inds = torch.cat([inds, boundary_inds])
+
+        # append the terms for the conditions
+        terms.append(cond_term)
+
+        # get the positions in the grid
+        cond_pos = grid[i][inds]
+
+        # append the positions for the conditions
+        positions.append(cond_pos)
+
+        # construct the values for the corresponding positions
+        cond_val = conds[i][inds]
+        qoi_val = qois[i][inds]
+
+        # append the values of the conditions and qois
+        values.append(cond_val)
+        labels.append(qoi_val)
+
+        # construct the index, use one-hot encoding or trigonometric encoding
+        if encoding not in ["one-hot", "trig"]:
+            raise ValueError(f"Invalid encoding: {encoding}")
+        elif encoding == "one-hot":
+            cond_ind = one_hot_encode(i, num_examples, max_num_pairs)
+        elif encoding == "trig":
+            cond_ind = trigonometric_encode(i, num_examples, max_num_pairs)
+
+        # append the indices of the conditions and qois
+        indices.append(cond_ind)
+
+    # concatenate all the terms, positions, values and indices
+    terms = torch.hstack(terms)
+    positions = torch.hstack(positions)
+    values = torch.hstack(values)
+    indices = torch.hstack(indices)
+    
+    # stack the terms, positions, values and indices to create the prompt
+    prompt = torch.vstack((terms, positions, values, indices)).t()
+
+    # stack the labels
+    labels = torch.hstack(labels)
+
+    return prompt, torch.zeros(3,3), labels
+
+
+def create_prompt_query(examples, max_num_pairs=None, encoding="trig"):
+    grid, conds, qois = examples['grid'], examples['conditions'], examples['qois']
+
+    # get the number of examples given
+    num_examples = len(grid)
+
+    # get the number of positions in the grid
+    num_pos = len(grid[0])
+
+    # get the max number of condition/qoi pairs
+    max_num_pairs = int(len(grid[0]) * 0.5) if not max_num_pairs else min(max_num_pairs, len(grid[0]))  
 
     terms = []
     positions = []
@@ -64,6 +135,8 @@ def create_prompt(examples, max_num_pairs=None, encoding="trig"):
     for i in range(num_examples-1):
         # randomly choose max_num_pairs of condition/qoi pairs
         cond_inds = (torch.randperm(num_pos-2) + 1)[:max_num_pairs-2]   # leave out two for the boundary conditions
+        boundary_inds = torch.tensor([0, -1])
+        cond_inds = torch.cat([cond_inds, boundary_inds])
         qoi_inds = (torch.randperm(num_pos-2) + 1)[:max_num_pairs]
 
         # append the terms for the conditions and qois
@@ -73,8 +146,6 @@ def create_prompt(examples, max_num_pairs=None, encoding="trig"):
         # get the positions in the grid
         cond_pos = grid[i][cond_inds]
         qoi_pos = grid[i][qoi_inds]
-        boundary_pos = torch.tensor([grid[i][0], grid[i][-1]])
-        cond_pos = torch.cat([cond_pos, boundary_pos])
 
         # append the positions for the conditions and qois
         positions.append(cond_pos)
@@ -83,8 +154,6 @@ def create_prompt(examples, max_num_pairs=None, encoding="trig"):
         # construct the values for the corresponding positions
         cond_val = conds[i][cond_inds]
         qoi_val = qois[i][qoi_inds]
-        boundary_val = torch.tensor([conds[i][0], conds[i][-1]])
-        cond_val = torch.cat([cond_val, boundary_val])
 
         # append the values of the conditions and qois
         values.append(cond_val)
@@ -105,28 +174,23 @@ def create_prompt(examples, max_num_pairs=None, encoding="trig"):
         indices.append(qoi_ind)
         
     # use the last example to create the question condition, the query key, and the labels
-    cond_inds = (torch.randperm(num_pos-2) + 1)[:max_num_pairs-2]
-    qoi_inds = (torch.randperm(num_pos-2) + 1)[:max_num_pairs]
-
-    # create the question conditions
     # randomly choose max_num_pairs of condition/qoi pairs
     cond_inds = (torch.randperm(num_pos-2) + 1)[:max_num_pairs-2]   # leave out two for the boundary conditions
+    boundary_inds = torch.tensor([0, -1])
+    cond_inds = torch.cat([cond_inds, boundary_inds])
+    qoi_inds = (torch.randperm(num_pos-2) + 1)[:max_num_pairs]
 
     # append the terms for the question conditions
     terms.append(cond_term)
 
     # get the positions in the grid
     cond_pos = grid[-1][cond_inds]
-    boundary_pos = torch.tensor([grid[-1][0], grid[-1][-1]])
-    cond_pos = torch.cat([cond_pos, boundary_pos])
 
     # append the positions for the question conditions
     positions.append(cond_pos)
 
     # construct the values for the corresponding positions
     cond_val = conds[-1][cond_inds]
-    boundary_val = torch.tensor([conds[-1][0], conds[-1][-1]])
-    cond_val = torch.cat([cond_val, boundary_val])
 
     # append the values of the questions conditions
     values.append(cond_val)
@@ -173,13 +237,15 @@ class EigvalueProbs(Dataset):
         num_examples=5, 
         max_num_pairs=None,
         encoding="trig",
-        transform=None
+        prompts_only=False,
+        transform=None,
     ):
         super(EigvalueProbs, self).__init__()
 
         self.num_examples = num_examples
         self.max_num_pairs = max_num_pairs
         self.encoding = encoding
+        self.prompts_only = prompts_only
 
         # load the iterable dataset from the tfrecord file
         ds = list(TFRecordDataset(data_dir, index_path=None))
@@ -198,7 +264,17 @@ class EigvalueProbs(Dataset):
         examples = self.data[index]
         examples = default_collate(examples)
 
-        return create_prompt(examples, max_num_pairs=self.max_num_pairs, encoding=self.encoding)
+        if self.prompts_only:
+            return create_prompts_only(
+                examples, 
+                max_num_pairs=self.max_num_pairs, 
+                encoding=self.encoding,
+            )
+        return create_prompt_query(
+            examples, 
+            max_num_pairs=self.max_num_pairs, 
+            encoding=self.encoding,
+        )
     
 
     def __len__(self):
@@ -212,7 +288,7 @@ class EigvalueProbs(Dataset):
         queries = torch.stack(queries, dim=0)
         labels = torch.stack(labels, dim=0)
 
-        return prompts, queries, labels
+        return prompts, queries, labels 
     
 
 # create a pytorch dataset of eigenvalue problems
@@ -243,7 +319,7 @@ class EigvalueProbsIter(IterableDataset):
         examples = [next(self.data) for _ in range(self.num_examples)]
         examples = default_collate(examples)
 
-        yield create_prompt(examples, max_num_pairs=self.max_num_pairs, encoding=self.encoding)
+        yield create_prompt_query(examples, max_num_pairs=self.max_num_pairs, encoding=self.encoding)
 
         
     def collate_fn(self, batch):
@@ -251,10 +327,9 @@ class EigvalueProbsIter(IterableDataset):
 
 
 # if __name__ == "__main__":
-#     data = EigvalueProbs()
-
-#     import pdb
-#     pdb.set_trace()
+#     data = EigvalueProbs(prompts_only=True)
     
 #     prompt, query, labels = data[0]
-#     print(prompt.shape, query.shape, labels.shape)
+    
+#     from utils.visualizations import plot_ground_state
+#     plot_ground_state(prompt[:, 1], labels)

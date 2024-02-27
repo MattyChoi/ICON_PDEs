@@ -17,7 +17,7 @@ trainer:
 
 defaults:
   - _self_
-  - model: icon
+  - model: encoder
   - data_module: max
   - dataset: eigvals
   - transform: no_transform
@@ -29,4 +29,4 @@ callbacks:
 tasks:
   _target_: tasks.ground_state.GroundStateModule
   
-pretrained: lightning_logs/version_10/checkpoints/epoch=9-step=2000.ckpt
+pretrained: lightning_logs/version_0/checkpoints/epoch=9-step=2000.ckpt
