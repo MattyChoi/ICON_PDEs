@@ -6,20 +6,17 @@ sys.path.insert(0, os.getcwd())
 import torch
 import torch.nn as nn
 
-from models.transformer import SelfAttnTransformer
 
-
-# In-Context Operator Network Encoder
-class Encoder(nn.Module):
+# Feed Forward Netwrok
+class FFN(nn.Module):
     def __init__(
         self, 
         max_length: int, 
         prompt_dim: int,
         qoi_size: int,
         emb_dim: int,
-        num_heads: int, 
         num_layers: int,
-        widening_factor: int = 4
+        widening_factor=4,
     ):
         """
         max_length: the maximum length of each prompt
@@ -36,13 +33,14 @@ class Encoder(nn.Module):
         # Project the prompts to an embedding with a higher number of dimensions
         self.prompt_proj = nn.Linear(prompt_dim, emb_dim)
 
-        # create the encoder part of the transformer
-        self.encoder = SelfAttnTransformer(
-            num_heads=num_heads,
-            num_layers=num_layers,
-            emb_dim=emb_dim,
-            widening_factor=widening_factor,
-        )   
+        self.dense_blocks = nn.ModuleList([
+            nn.Sequential(
+                nn.Linear(emb_dim, widening_factor * emb_dim),
+                nn.GELU(),
+                nn.Linear(widening_factor * emb_dim, emb_dim)
+            )
+            for _ in range(num_layers)
+        ])
 
         # Project the encoder output to the output space
         self.qoi_proj = nn.Linear(emb_dim, qoi_size)
@@ -59,17 +57,17 @@ class Encoder(nn.Module):
 
     def forward(self, prompt, query):
         """
-        prompt: 2D array, [batch_size, propmt_size, prompt_dim (number of keys, values, inds)]
+        prompt: 2D array, [batch_size, prompt_size, prompt_dim (number of keys, values, inds)]
         """
         prompt = prompt[:, :, [1, 2]]
-
+        
         # project the prompts to a higher embedding space
-        prompt = self.prompt_proj(prompt)
+        x = self.prompt_proj(prompt)
 
-        # get the encoder embeddings of the prompts
-        enc = self.encoder(prompt)
+        for blocks in self.dense_blocks:
+            x = blocks(x)
 
         # infer the qoi from the decoder embeddings
-        qoi = self.qoi_proj(enc).squeeze(-1)
+        qoi = self.qoi_proj(x).squeeze(-1)
 
         return qoi

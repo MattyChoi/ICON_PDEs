@@ -1,8 +1,7 @@
-_target_: models.encoder.Encoder
-max_length: 50
+_target_: models.ffn.FFN
+max_length: 450 
 prompt_dim: 2
 qoi_size: 1
 emb_dim: 256
-num_heads: 8
 num_layers: 4
 widening_factor: 4
