@@ -19,7 +19,7 @@ defaults:
   - _self_
   - model: encoder
   - data_module: max
-  - dataset: eigvals
+  - dataset: pdeprobs
   - transform: no_transform
   - loss: mse
   - user_overrides: null

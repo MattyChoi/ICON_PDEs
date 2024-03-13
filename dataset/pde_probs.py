@@ -227,9 +227,9 @@ def create_prompt_query(examples, max_num_pairs=None, encoding="trig"):
 
 
 # create a pytorch dataset of eigenvalue problems
-class EigvalueProbs(Dataset):
+class PDEProblems(Dataset):
     """
-    Dataset of eigenvalue problems for the Schrödinger equation
+    Dataset of pde problems for the Schrödinger equation
     """
     def __init__(
         self, 
@@ -240,7 +240,7 @@ class EigvalueProbs(Dataset):
         prompts_only=False,
         transform=None,
     ):
-        super(EigvalueProbs, self).__init__()
+        super(PDEProblems, self).__init__()
 
         self.num_examples = num_examples
         self.max_num_pairs = max_num_pairs

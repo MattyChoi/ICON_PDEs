@@ -35,11 +35,11 @@ def convert_to_tf_example(data_dic):
     return example.SerializeToString()
 
 
-def finite_diff_dataset(path: str, num_operators: int, gridsize: int):
+def finite_diff_dataset(path: str, num_operators: int, gridsize: int, eigenfunction=False):
     if not os.path.exists(path):
         os.makedirs(path)
 
-    file_path = os.path.join(path, "finite_diff.tfrecord")
+    file_path = os.path.join(path, "finite_diff" + (eigenfunction * "_eigvals") + ".tfrecord" )
 
     # Create a tfrecord writer and overwrite any existing file
     with tf.io.TFRecordWriter(file_path) as writer:
@@ -54,14 +54,21 @@ def finite_diff_dataset(path: str, num_operators: int, gridsize: int):
             # Create a Hamiltonian matrix
             hamiltonian = finite_diff(grid[1:-1], potential_fn)
 
-            # Get the eigenvalues and eigenvectors
-            _, eigenvecs = get_eigvals_and_eigvecs(hamiltonian)
+            if eigenfunction:
+                # Get the eigenvalues and eigenvectors
+                _, eigenvecs = get_eigvals_and_eigvecs(hamiltonian)
+                conditions = potential_fn(grid).numpy()
+                qois = eigenvecs[:,0].numpy()
+            else:
+                f = torch.randn(hamiltonian.size(0))
+                conditions = np.pad(f.numpy(), (1, 1))
+                qois = torch.linalg.pinv(hamiltonian) @ f
             
             # Convert PyTorch tensors to NumPy arrays and store in dictionary
             data_dic = {
                 "grid": grid.numpy(),
-                "conditions": potential_fn(grid).numpy(),
-                "qois": np.pad(eigenvecs[:,0].numpy(), (1, 1)),
+                "conditions": conditions,
+                "qois": np.pad(qois.numpy(), (1, 1)),
             }
 
             # Create an example
@@ -79,10 +86,11 @@ def main():
     parser.add_argument('-n', '--number', type=int, default=100000, help='number of operators to generate')
     parser.add_argument('-g', '--gridsize', type=int, default=101, help='size of the grid sampled for each operator')
     parser.add_argument('-p', '--path', type=str, default="./data", help='folder path to save the tfrecord file')
+    parser.add_argument('-e', '--eigen', type=bool, default=False, help='get ground state eigenfunction as qoi')
 
     args = parser.parse_args()
 
-    finite_diff_dataset(args.path, args.number, args.gridsize)
+    finite_diff_dataset(args.path, args.number, args.gridsize, args.eigen)
 
 
 if __name__ == "__main__":

@@ -54,14 +54,13 @@ def get_eigvals_and_eigvecs(hamiltonian):
     inds = torch.argsort(eigenvals.real)
     eigenvals, eigenvecs = eigenvals[inds].real, eigenvecs[:, inds].real
     assert eigenvals[0] > 0
-    if eigenvecs[:, 0].min() >= 0:
+    if eigenvecs[:, 0].sum() < 0:
         eigenvecs[:, 0] *= -1
 
     return eigenvals, eigenvecs
 
 
-
-if __name__ == "__main__":
+def example_schordinger_eigenfunctions():
     # Define the parameters
     domain_size = 101
     x_values = torch.linspace(0, 1, domain_size)[1:-1]
@@ -75,7 +74,7 @@ if __name__ == "__main__":
     # Plot the potential and the first few eigenfunctions
     plt.figure(figsize=(12,10))
     # plt.plot(x_values,potential(x_values),lw=3)
-    for i in range(1):
+    for i in range(4): 
         plt.plot(x_values,vecs[:,i].numpy(),lw=3, label="{} ".format(i))
         plt.xlabel('x', size=14)
         plt.ylabel('$\psi$(x)',size=14)
@@ -85,3 +84,30 @@ if __name__ == "__main__":
     plt.legend()
     plt.title('normalized wavefunctions for a harmonic oscillator using finite difference method',size=14)
     plt.show()
+
+
+
+def example_schrodingers_equation():
+    # Define the parameters
+    domain_size = 101
+    x_values = torch.linspace(0, 1, domain_size)[1:-1]
+    
+    # Generate a random nonnegative potential function
+    potential = generate_random_potential_fn(pieces=10, ground=5.0)
+
+    A = finite_diff(x_values, potential)
+    f = torch.randn(A.size(0))
+    u = torch.linalg.pinv(A) @ f
+    
+    plt.figure(figsize=(12,10))
+    # plt.plot(x_values,f.numpy(),lw=3, label="f_val")
+    plt.plot(x_values,u.numpy(),lw=3, label="u_val")
+    plt.xlabel('x', size=14)
+    plt.ylabel('$\psi$(x)',size=14)
+    plt.legend()
+    plt.title('normalized wavefunctions for a harmonic oscillator using finite difference method',size=14)
+    plt.show()
+
+
+if __name__ == "__main__":
+    example_schrodingers_equation()

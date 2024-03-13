@@ -6,9 +6,9 @@ num_nodes: 1
 
 defaults:
   - _self_
-  - model: encoder
+  - model: icon
   - data_module: max
-  - dataset: eigvals
+  - dataset: pdeprobs
   - transform: no_transform
   - loss: mse
   - user_overrides: null
