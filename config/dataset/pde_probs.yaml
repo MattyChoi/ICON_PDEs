@@ -1,0 +1,17 @@
+train:
+  _target_: dataset.pde_probs.PDEProbs
+  data_dir: ${hydra:runtime.cwd}/data/finite_diff.tfrecord
+  num_examples: 5
+  max_num_pairs: null
+  encoding: "trig"
+  transform: null
+  prompts_only: False
+val:
+  _target_: dataset.pde_probs.PDEProbs
+  data_dir: ${hydra:runtime.cwd}/data/finite_diff.tfrecord
+  num_examples: 5
+  max_num_pairs: null
+  encoding: "trig"
+  transform: null
+  prompts_only: False
+test: ${dataset.val}

@@ -6,6 +6,7 @@ sys.path.insert(0, os.getcwd())
 import hydra
 from omegaconf import DictConfig
 import lightning as L
+import random
 import torch
 import torchmetrics
 
@@ -66,7 +67,7 @@ class GroundStateModule(L.LightningModule):
 
 
     def on_validation_epoch_end(self) -> None:
-        batch_num, batch_ind = 0, 0
+        batch_num, batch_ind = random.randint(0, len(self.val_outs)-1), 0
 
         # get the validation conditions, qois, and labels
         conditions, qois, labels = self.val_outs[batch_num]
@@ -107,7 +108,7 @@ class GroundStateModule(L.LightningModule):
 
 
     def on_test_epoch_end(self) -> None:
-        batch_num, batch_ind = 0, 0
+        batch_num, batch_ind = random.randint(0, len(self.val_outs)-1), 0
 
         # get the validation conditions, qois, and labels
         conditions, qois, labels = self.test_outs[batch_num]

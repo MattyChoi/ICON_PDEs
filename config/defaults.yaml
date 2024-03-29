@@ -8,7 +8,7 @@ defaults:
   - _self_
   - model: icon
   - data_module: max
-  - dataset: pdeprobs
+  - dataset: pde_probs
   - transform: no_transform
   - loss: mse
   - user_overrides: null
@@ -36,7 +36,7 @@ trainer:
   benchmark: True
   profiler: null
   num_sanity_val_steps: 0
-  check_val_every_n_epoch: 4
+  check_val_every_n_epoch: 2
   accelerator: 'gpu'
   devices: ${gpu}
   num_nodes: ${num_nodes}
