@@ -17,9 +17,9 @@ trainer:
 
 defaults:
   - _self_
-  - model: encoder
+  - model: bare_tf
   - data_module: max
-  - dataset: pdeprobs
+  - dataset: pde_probs
   - transform: no_transform
   - loss: mse
   - user_overrides: null
@@ -27,6 +27,6 @@ defaults:
 callbacks:
 
 tasks:
-  _target_: tasks.ground_state.GroundStateModule
+  _target_: tasks.qoi_pred.QOIPredModule
   
 pretrained: lightning_logs/version_0/checkpoints/epoch=9-step=2000.ckpt

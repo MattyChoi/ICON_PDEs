@@ -75,7 +75,7 @@ def example_schordinger_eigenfunctions():
     plt.figure(figsize=(12,10))
     # plt.plot(x_values,potential(x_values),lw=3)
     for i in range(4): 
-        plt.plot(x_values,vecs[:,i].numpy(),lw=3, label="{} ".format(i))
+        plt.plot(x_values,vecs[:,i].numpy(),lw=3, label=f"Eigenfunction {i}")
         plt.xlabel('x', size=14)
         plt.ylabel('$\psi$(x)',size=14)
         print(vecs[:,i].norm())

@@ -6,7 +6,7 @@ num_nodes: 1
 
 defaults:
   - _self_
-  - model: icon
+  - model: bare_tf
   - data_module: max
   - dataset: pde_probs
   - transform: no_transform
@@ -19,7 +19,7 @@ pretrained:
 callbacks:
 
 tasks:
-  _target_: tasks.ground_state.GroundStateModule
+  _target_: tasks.qoi_pred.QOIPredModule
 
 optimizer:
   _target_: torch.optim.Adam

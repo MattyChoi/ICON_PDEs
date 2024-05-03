@@ -1,0 +1,4 @@
+_target_: models.bare_tf.Transformer
+prompt_dim: 202
+emb_dim: 256
+num_heads: 8
