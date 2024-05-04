@@ -120,8 +120,8 @@ def main():
     parser = argparse.ArgumentParser(description='Creates a tfrecord dataset of eigenvalue problems for the Schrödinger equation.')
 
     # Add command-line arguments or flags
-    parser.add_argument('-o', '--numop', type=int, default=5000, help='number of operators to generate')
-    parser.add_argument('-n', '--numex', type=int, default=5000, help='number of examples to generate for each operator')
+    parser.add_argument('-o', '--numop', type=int, default=1000, help='number of operators to generate')
+    parser.add_argument('-n', '--numex', type=int, default=1000, help='number of examples to generate for each operator')
     parser.add_argument('-g', '--gridsize', type=int, default=101, help='size of the grid sampled for each operator')
     parser.add_argument('-p', '--path', type=str, default="./data", help='folder path to save the tfrecord file')
     parser.add_argument('-e', '--eigen', type=bool, default=False, help='get ground state eigenfunction as qoi')

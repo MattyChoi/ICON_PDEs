@@ -23,7 +23,7 @@ tasks:
 
 optimizer:
   _target_: torch.optim.Adam
-  lr: 1e-5
+  lr: 1e-6
 
 lr_scheduler:
   _target_: torch.optim.lr_scheduler.MultiStepLR
@@ -32,7 +32,7 @@ lr_scheduler:
 
 trainer:
   precision: 32
-  max_epochs: 20
+  max_epochs: 200
   benchmark: True
   profiler: null
   num_sanity_val_steps: 0

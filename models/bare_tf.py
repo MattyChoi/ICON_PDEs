@@ -30,10 +30,6 @@ class Transformer(nn.Module):
         super().__init__()
 
         self.emb_dim = emb_dim
-
-        # Project the prompts to an embedding with a higher number of dimensions
-        self.prompt_proj = nn.Linear(prompt_dim, emb_dim)
-        super().__init__()
         
         # set the number of heads we want for multi-head attention
         self.num_heads = num_heads
@@ -43,12 +39,9 @@ class Transformer(nn.Module):
         hidden_dim = emb_dim
         if head_dim is not None:
             hidden_dim = head_dim * num_heads
-
-        # Project the prompts to an embedding with a higher number of dimensions
-        self.prompt_proj = nn.Linear(prompt_dim, emb_dim)
             
         # create the matrices needed to compute the query, key, and value vectors
-        self.c_attn = nn.Linear(emb_dim, hidden_dim * 3)
+        self.c_attn = nn.Linear(prompt_dim, hidden_dim * 3)
 
         # one last mlp to combine all information from all the heads
         self.c_proj = nn.Linear(hidden_dim, prompt_dim)
@@ -67,10 +60,7 @@ class Transformer(nn.Module):
                 torch.nn.init.zeros_(module.bias)
 
 
-    def forward(self, prompt):
-        # project the prompts to a higher embedding space
-        x = self.prompt_proj(prompt)
-        
+    def forward(self, x):
         # batch, position (timestep), dimension of embedding
         b, t, c = x.shape
 

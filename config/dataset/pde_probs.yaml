@@ -1,9 +1,9 @@
 train:
   _target_: dataset.pde_probs.PDEProblems
-  data_dir: ${hydra:runtime.cwd}/data/finite_diff_gsize_101.tfrecord
+  data_dir: ${hydra:runtime.cwd}/data/finite_diff_gsize_101_small.tfrecord
   transform: null
 val:
   _target_: dataset.pde_probs.PDEProblems
-  data_dir: ${hydra:runtime.cwd}/data/finite_diff_gsize_101.tfrecord
+  data_dir: ${hydra:runtime.cwd}/data/finite_diff_gsize_101_small.tfrecord
   transform: null
 test: ${dataset.val}

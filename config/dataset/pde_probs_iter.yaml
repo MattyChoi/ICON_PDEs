@@ -1,0 +1,11 @@
+train:
+  _target_: dataset.pde_probs.PDEProblemsIter
+  data_dir: ${hydra:runtime.cwd}/data/finite_diff_gsize_101_medium.tfrecord
+  index_path: null
+  transform: null
+val:
+  _target_: dataset.pde_probs.PDEProblemsIter
+  data_dir: ${hydra:runtime.cwd}/data/finite_diff_gsize_101_medium.tfrecord
+  index_path: null
+  transform: null
+test: ${dataset.val}
