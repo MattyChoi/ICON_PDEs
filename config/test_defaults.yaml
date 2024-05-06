@@ -26,7 +26,6 @@ defaults:
 
 callbacks:
 
-tasks:
-  _target_: tasks.qoi_pred.QOIPredModule
+tasks: "tasks.qoi_pred.QOIPredModule"
   
-pretrained: lightning_logs/version_0/checkpoints/epoch=9-step=2000.ckpt
+pretrained: saved_logs/gsize_101_numex_1000_numop_1000_lr_1e-3/checkpoints/epoch=99-step=4000.ckpt

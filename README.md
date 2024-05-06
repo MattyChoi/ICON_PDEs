@@ -95,3 +95,9 @@ Used these resources to help make dockerfile
  - https://saturncloud.io/blog/how-to-install-pytorch-on-the-gpu-with-docker/
  - https://stackoverflow.com/questions/65492490/how-to-conda-install-cuda-enabled-pytorch-in-a-docker-container
 
+
+## Relevant Papers
+
+https://www.pnas.org/doi/epdf/10.1073/pnas.2310142120
+https://arxiv.org/pdf/2208.01066
+https://proceedings.mlr.press/v202/von-oswald23a/von-oswald23a.pdf

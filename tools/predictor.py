@@ -19,7 +19,7 @@ def get_predict_params(cfg: DictConfig):
     if cfg.log:
         # logging using tensorboard
         # https://pytorch-lightning.readthedocs.io/en/stable/api/pytorch_lightning.loggers.tensorboard.html
-        logger = TensorBoardLogger(save_dir="tb_logs")
+        logger = TensorBoardLogger(save_dir="./")
 
         # pytorch lightning callbacks
         # https://pytorch-lightning.readthedocs.io/en/stable/extensions/callbacks.html#:~:text=A%20callback%20is%20a%20self,your%20lightning%20module%20to%20run.
@@ -45,7 +45,7 @@ def pred(cfg: DictConfig):
 
     # build model
     pretrained = cfg.pretrained
-    task = hydra.utils.instantiate(cfg.tasks, cfg).load_from_checkpoint(
+    task = hydra.utils.get_class(cfg.tasks).load_from_checkpoint(
         pretrained, dataset=cfg.dataset, map_location=None
     )
 
