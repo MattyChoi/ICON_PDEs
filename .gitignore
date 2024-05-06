@@ -2,6 +2,7 @@ in-context-operator-networks
 outputs
 tb_logs
 lightning_logs/*
+saved_logs
 text-sed
 sample.png
 # *.png

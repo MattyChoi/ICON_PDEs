@@ -4,6 +4,7 @@ import sys
 sys.path.insert(0, os.getcwd())
 
 import numpy as np
+from functools import partial
 import torch
 from torch.utils.data import Dataset, IterableDataset, default_collate
 from tfrecord.torch.dataset import TFRecordDataset
@@ -13,7 +14,7 @@ import typing
     
 
 
-def create_prompt(examples):
+def stack_pairs(examples, scale=1.0):
     grid, conds, qois = examples['grid'], examples['conditions'], examples['qois']
     grid, conds, qois = torch.Tensor(grid), torch.Tensor(conds), torch.Tensor(qois)
     
@@ -23,7 +24,7 @@ def create_prompt(examples):
     
     # reshape the conditions and qois back to their 2d array forms
     conds = conds.reshape(num_examples, grid_size)
-    qois = qois.reshape(num_examples, grid_size)
+    qois = qois.reshape(num_examples, grid_size) * scale
 
     # create the label
     label = torch.hstack([conds, qois])
@@ -39,6 +40,30 @@ def create_prompt(examples):
     return prompt, label
 
 
+def interleave_pairs(examples, scale=1.0):
+    grid, conds, qois = examples['grid'], examples['conditions'], examples['qois']
+    grid, conds, qois = torch.Tensor(grid), torch.Tensor(conds), torch.Tensor(qois)
+    
+    # get the number of examples and grid_size
+    grid_size = grid.size(0)
+    num_examples = conds.size(0) // grid_size 
+    
+    # reshape the conditions and qois back to their 2d array forms
+    conds = conds.reshape(num_examples, grid_size)
+    qois = qois.reshape(num_examples, grid_size)
+    
+    # shuffle the qois so that we are predicting different qois each time
+    shuffle = torch.randperm(num_examples)
+    conds = conds[shuffle]
+    qois = qois[shuffle] * scale
+    label = qois.clone().detach()
+
+    # create the input sequence (cut off the last qoi in the sequence)
+    prompt = torch.stack([conds, qois], dim=1).view(num_examples * 2, grid_size)[:-1]
+    
+    return prompt, label
+
+
 # create a pytorch dataset of pde problems
 class PDEProblems(Dataset):
     """
@@ -46,7 +71,8 @@ class PDEProblems(Dataset):
     """
     def __init__(
         self, 
-        data_dir="./data/finite_diff_gsize_101.tfrecord", 
+        data_dir="./data/finite_diff_gsize_101_small.tfrecord", 
+        scale=1000.0,
         transform=None,
     ):
         super(PDEProblems, self).__init__()
@@ -54,12 +80,13 @@ class PDEProblems(Dataset):
         # load the iterable dataset from the tfrecord file
         print("loading tfrecord dataset")
         self.data = list(TFRecordDataset(data_dir, index_path=None))
+        self.scale = scale
         print("tfrecord dataset loaded")
 
     def __getitem__(self, index):
         # create a single prompt, using a set of examples from one operator from our dataset
         examples = self.data[index]
-        return create_prompt(examples)
+        return interleave_pairs(examples, scale=self.scale)
 
     def __len__(self):
         return len(self.data)
@@ -119,8 +146,9 @@ class PDEProblemsIter(IterableDataset):
     """
 
     def __init__(self,
-        data_dir: str,
-        index_path: typing.Union[str, None],
+        data_dir: str = "./data/finite_diff_gsize_101_small.tfrecord",
+        scale: float = 1000.0,
+        index_path: typing.Union[str, None] = None,
         description: typing.Union[typing.List[str], typing.Dict[str, str], None] = None,
         shuffle_queue_size: typing.Optional[int] = None,
         transform: typing.Callable[[dict], typing.Any] = None,
@@ -129,6 +157,7 @@ class PDEProblemsIter(IterableDataset):
     ) -> None:
         super(PDEProblemsIter, self).__init__()
         self.data_path = data_dir
+        self.scale = scale
         self.index_path = index_path
         self.description = description
         self.sequence_description = sequence_description
@@ -153,7 +182,7 @@ class PDEProblemsIter(IterableDataset):
             it = iterator_utils.shuffle_iterator(it, self.shuffle_queue_size)
         if self.transform:
             it = map(self.transform, it)
-        return map(create_prompt, it)
+        return map(partial(interleave_pairs, scale=self.scale), it)
 
         
     def collate_fn(self, batch):
@@ -168,7 +197,9 @@ class PDEProblemsIter(IterableDataset):
 
 
 # if __name__ == "__main__":
-#     data = PDEProblemsIter()
+#     data = PDEProblems(scale=100.0)
+    
+#     prompt, label = data[0]
     
 #     import pdb
 #     pdb.set_trace()
