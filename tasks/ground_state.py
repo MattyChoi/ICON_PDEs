@@ -10,7 +10,7 @@ import random
 import torch
 import torchmetrics
 
-from utils.visualizations import plot_ground_state
+from utils.visualizations import plot_figure
 
 
 class GroundStateModule(L.LightningModule):
@@ -73,7 +73,7 @@ class GroundStateModule(L.LightningModule):
         conditions, qois, labels = self.val_outs[batch_num]
         conditions = conditions[:, :, 1]
         
-        fig = plot_ground_state(
+        fig = plot_figure(
             conditions=conditions[batch_ind], 
             qois=qois[batch_ind], 
             labels=labels[batch_ind],
@@ -114,7 +114,7 @@ class GroundStateModule(L.LightningModule):
         conditions, qois, labels = self.test_outs[batch_num]
         conditions = conditions[:, :, 1]
 
-        fig = plot_ground_state(
+        fig = plot_figure(
             conditions=conditions[batch_ind], 
             qois=qois[batch_ind], 
             labels=labels[batch_ind],

@@ -1,0 +1,15 @@
+train:
+  _target_: dataset.pde_probs.PDEProblems
+  data_dir: ${hydra:runtime.cwd}/data/ood_gsize_101_numex_500_numop_10.tfrecord
+  scale: 10.0
+  transform: null
+val:
+  _target_: dataset.pde_probs.PDEProblems
+  data_dir: ${hydra:runtime.cwd}/data/ood_gsize_101_numex_500_numop_10.tfrecord
+  scale: 10.0
+  transform: null
+test: ${dataset.val}
+
+
+
+

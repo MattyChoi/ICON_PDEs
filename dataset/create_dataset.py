@@ -73,11 +73,11 @@ def finite_diff_dataset_eigvals(path: str, num_operators: int, gridsize: int):
             writer.write(example)
 
 
-def finite_diff_dataset(path: str, num_operators: int, num_examples: int, gridsize: int):
+def finite_diff_dataset(path: str, num_operators: int, num_examples: int, gridsize: int, ood: False):
     if not os.path.exists(path):
         os.makedirs(path)
 
-    file_path = os.path.join(path, f"gsize_{gridsize}_numex_{num_examples}_numop_{num_operators}.tfrecord")
+    file_path = os.path.join(path, ood * "ood_" + f"gsize_{gridsize}_numex_{num_examples}_numop_{num_operators}.tfrecord")
 
     # Create a tfrecord writer and overwrite any existing file
     with tf.io.TFRecordWriter(file_path) as writer:
@@ -125,13 +125,14 @@ def main():
     parser.add_argument('-g', '--gridsize', type=int, default=101, help='size of the grid sampled for each operator')
     parser.add_argument('-p', '--path', type=str, default="./data", help='folder path to save the tfrecord file')
     parser.add_argument('-e', '--eigen', type=bool, default=False, help='get ground state eigenfunction as qoi')
+    parser.add_argument('-t', '--ood', type=bool, default=False, help='if out of distribution, mark True')
 
     args = parser.parse_args()
 
     if args.eigen:
         finite_diff_dataset_eigvals(args.path, args.numop, args.gridsize)
     else:
-        finite_diff_dataset(args.path, args.numop, args.numex, args.gridsize)
+        finite_diff_dataset(args.path, args.numop, args.numex, args.gridsize, ood=args.ood)
 
 
 if __name__ == "__main__":

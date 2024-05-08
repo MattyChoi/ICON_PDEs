@@ -19,7 +19,7 @@ defaults:
   - _self_
   - model: bare_tf
   - data_module: max
-  - dataset: pde_probs
+  - dataset: ood_pde_probs
   - transform: no_transform
   - loss: mse
   - user_overrides: null
@@ -28,4 +28,4 @@ callbacks:
 
 tasks: "tasks.qoi_pred.QOIPredModule"
   
-pretrained: saved_logs/gsize_101_numex_1000_numop_1000_lr_1e-3/checkpoints/epoch=99-step=4000.ckpt
+pretrained: saved_logs/gsize_101_numex_500_numop_1000_lr_1e-3/checkpoints/epoch=99-step=4000.ckpt

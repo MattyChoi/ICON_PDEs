@@ -331,5 +331,5 @@ class EigvalueProbsIter(IterableDataset):
     
 #     prompt, query, labels = data[0]
     
-#     from utils.visualizations import plot_ground_state
-#     plot_ground_state(prompt[:, 1], labels)
+#     from utils.visualizations import plot_figure
+#     plot_figure(prompt[:, 1], labels)
