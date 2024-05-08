@@ -98,6 +98,6 @@ Used these resources to help make dockerfile
 
 ## Relevant Papers
 
-https://www.pnas.org/doi/epdf/10.1073/pnas.2310142120
-https://arxiv.org/pdf/2208.01066
-https://proceedings.mlr.press/v202/von-oswald23a/von-oswald23a.pdf
+- https://www.pnas.org/doi/epdf/10.1073/pnas.2310142120
+- https://arxiv.org/pdf/2208.01066
+- https://proceedings.mlr.press/v202/von-oswald23a/von-oswald23a.pdf

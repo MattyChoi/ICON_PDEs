@@ -77,7 +77,7 @@ def finite_diff_dataset(path: str, num_operators: int, num_examples: int, gridsi
     if not os.path.exists(path):
         os.makedirs(path)
 
-    file_path = os.path.join(path, f"finite_diff_gsize_{gridsize}.tfrecord")
+    file_path = os.path.join(path, f"gsize_{gridsize}_numex_{num_examples}_numop_{num_operators}.tfrecord")
 
     # Create a tfrecord writer and overwrite any existing file
     with tf.io.TFRecordWriter(file_path) as writer:
