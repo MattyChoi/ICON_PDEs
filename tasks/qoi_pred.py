@@ -41,7 +41,7 @@ class QOIPredModule(L.LightningModule):
         self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
 
         return loss
-
+    
 
     def validation_step(
         self, batch: torch.Tensor, batch_idx: int, *args, **kwargs
@@ -58,14 +58,14 @@ class QOIPredModule(L.LightningModule):
         # log the loss
         self.log("val_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
         
-        self.val_outs.append((qois[:, ::2, :], labels))
-
-
-    def on_validation_epoch_end(self) -> None:
-        batch_num = random.randint(0, len(self.val_outs)-1)
+        self.val_outs.append((qois[:, -1, :], labels[:, -1]))
+    
+    
+    def _shared_epoch_end(self, outputs, mode: str) -> None:
+        batch_num = random.randint(0, len(outputs)-1)
         
         # get the test conditions, qois, and labels
-        qois, labels = self.test_outs[batch_num]
+        qois, labels = outputs[batch_num]
         dim = qois.size(-1)
         conditions = torch.linspace(0, 1, dim)
         
@@ -73,13 +73,28 @@ class QOIPredModule(L.LightningModule):
         
         fig = plot_figure(
             conditions=conditions, 
-            qois=qois[:, -1], 
-            labels=labels[:, -1],
+            qois=qois, 
+            labels=labels,
             inds=batch_inds,
             show=False
         )
-        self.logger.experiment.add_figure(f"Validation Epoch {self.current_epoch}", fig)
-        self.val_outs.clear()
+        self.logger.experiment.add_figure(f"{mode} Epoch {self.current_epoch}", fig)
+        
+        # log the mean loss and variance
+        qois = torch.vstack([pair[0] for pair in outputs])
+        labels = torch.vstack([pair[1] for pair in outputs])
+        mse = torch.mean((qois - labels)**2, dim=1) / torch.norm(labels, dim=1)
+        mean = torch.mean(mse)
+        var = torch.var(mse)
+        
+        self.logger.experiment.add_text(f"{mode} Loss", f"{mode} Loss: {mean}", self.global_step)
+        self.logger.experiment.add_text(f"{mode} Variance", f"{mode} Loss: {var}", self.global_step)
+        
+        outputs.clear()
+
+
+    def on_validation_epoch_end(self) -> None:
+        self._shared_epoch_end(self.val_outs, "Validation")
 
 
     def test_step(
@@ -97,29 +112,11 @@ class QOIPredModule(L.LightningModule):
         # log the loss
         self.log("test_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
         
-        self.test_outs.append((qois[:, ::2, :], labels))
+        self.test_outs.append((qois[:, -1, :], labels[:, -1]))
 
 
     def on_test_epoch_end(self) -> None:
-        batch_num = random.randint(0, len(self.test_outs)-1)
-        
-        # get the test conditions, qois, and labels
-        qois, labels = self.test_outs[batch_num]
-        dim = qois.size(-1)
-        conditions = torch.linspace(0, 1, dim)
-        
-        batch_inds = random.sample(range(len(qois)), 9)
-        
-        fig = plot_figure(
-            conditions=conditions, 
-            qois=qois[:, -1], 
-            labels=labels[:, -1],
-            inds=batch_inds,
-            show=False
-        )
-        self.logger.experiment.add_figure(f"Test Epoch {self.current_epoch}", fig)
-            
-        self.test_outs.clear()
+        self._shared_epoch_end(self.test_outs, "Test")
 
 
     def configure_optimizers(self):
